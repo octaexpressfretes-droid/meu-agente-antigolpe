@@ -26,22 +26,29 @@ def home():
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
-    # Recebe os dados enviados pela API do WhatsApp
     dados = request.get_json()
     
-    # Extrai o texto da mensagem (o formato pode mudar dependendo da API que você escolher)
-    mensagem_usuario = dados.get("text", "") 
-    
-    if not mensagem_usuario:
-        return jsonify({"erro": "Mensagem vazia"}), 400
-
-    # Pede a análise para o Gemini
+    # Este comando tenta pegar o texto de diferentes formas (conversa direta ou legenda de imagem)
+    mensagem_usuario = ""
     try:
-        resultado = model.generate_content(mensagem_usuario)
-        return jsonify({
-            "status": "sucesso",
-            "analise": resultado.text
-        }), 200
+        # Padrão da Evolution API
+        mensagem_usuario = dados.get('data', {}).get('message', {}).get('conversation', "")
+        if not mensagem_usuario:
+            mensagem_usuario = dados.get('data', {}).get('message', {}).get('extendedTextMessage', {}).get('text', "")
+    except:
+        mensagem_usuario = "Erro ao ler mensagem"
+
+    if not mensagem_usuario:
+        return jsonify({"status": "ignorado"}), 200 # Ignora se não for texto
+
+    # Manda para o Gemini
+    resultado = model.generate_content(mensagem_usuario)
+    
+    # Aqui você retornaria a resposta para a API enviar ao usuário
+    return jsonify({
+        "status": "sucesso",
+        "analise": resultado.text
+    }), 200
     except Exception as e:
         return jsonify({"erro": str(e)}), 500
 
