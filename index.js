@@ -34,7 +34,7 @@ function start(client) {
 
     try {
       const response = await axios.post(
-        "https://meu-agente-antigolpe.onrender.com",
+        "https://meu-agente-antigolpe.onrender.com/webhook",
         {
           text: message.body,
           from: message.from
